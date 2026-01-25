@@ -1,0 +1,70 @@
+# ============================
+# Gradle
+# ============================
+.gradle/
+build/
+**/build/
+
+# Local Gradle config
+local.properties
+
+# Gradle cache & logs
+.gradle-cache/
+gradle-app.setting
+
+# ============================
+# Android
+# ============================
+*.apk
+*.aab
+*.dex
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+
+# ============================
+# IntelliJ / Android Studio
+# ============================
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Editor temp files
+*.swp
+*.swo
+*.log
+*.tmp
+
+# ============================
+# OS files
+# ============================
+.DS_Store
+Thumbs.db
+
+# ============================
+# Kotlin / Java
+# ============================
+.kotlin/
+*.hprof
+
+# ============================
+# Compose & tooling caches
+# ============================
+compose-desktop/
+.externalNativeBuild/
+.cxx/
+
+# ============================
+# Test outputs
+# ============================
+test-results/
+coverage/
+
+# ============================
+# Maven publish output
+# ============================
+/publish/

@@ -24,11 +24,17 @@ A high-performance, configurable grid library for Jetpack Compose.
 
 ```kotlin
 // settings.gradle.kts
-include(":flexigrid-compose")
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven(url = "https://jitpack.io")
+    }
+}
 
 // app/build.gradle.kts
 dependencies {
-    implementation(project(":flexigrid-compose"))
+    implementation("com.bitfield.flexigrid:flexigrid-compose:1.0.0")
 }
 ```
 
@@ -148,7 +154,7 @@ FlexiGrid(
 ## License
 
 ```
-Copyright 2026 bitfiled66
+Copyright 2026 bitfield66
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

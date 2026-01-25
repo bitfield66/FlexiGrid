@@ -1,5 +1,9 @@
 # FlexGrid
 
+## 🎥 Demo
+
+<video src="https://github.com/user-attachments/assets/a3e5e07e-424b-4e91-b8be-307b0fcc2708" width="300" controls></video>
+
 A high-performance, configurable grid library for Jetpack Compose.
 
 [![API](https://img.shields.io/badge/API-24%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=24)

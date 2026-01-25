@@ -34,7 +34,7 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.bitfield.flexigrid:flexigrid-compose:1.0.0")
+    implementation("com.github.bitfield66:FlexiGrid:1.0.0")
 }
 ```
 

@@ -36,7 +36,7 @@ class GridState(
         internal set
     
     /**
-     * Horizontal scroll state for the main content area.
+     * Horizontal scroll state for the main content area (legacy, kept for compatibility).
      */
     val horizontalScrollState: ScrollState = ScrollState(initialHorizontalScroll)
     
@@ -48,10 +48,7 @@ class GridState(
         firstVisibleItemScrollOffset = initialFirstVisibleItemOffset
     )
     
-    /**
-     * Header horizontal scroll state - synchronized with content.
-     */
-    val headerHorizontalScrollState: ScrollState = ScrollState(initialHorizontalScroll)
+
     
     /**
      * Secondary vertical lazy list state for content columns (when sticky column exists).

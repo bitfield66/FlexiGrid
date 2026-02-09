@@ -35,13 +35,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.bitfield.flexigrid.ui.theme.FlexiGridTheme
 import com.flexigrid.compose.config.GridConfig
+import com.flexigrid.compose.config.StickyConfig
 import com.flexigrid.compose.layout.FlexiGrid
 import com.flexigrid.compose.model.ColumnWidth
 import com.flexigrid.compose.model.GridColumn
 import com.flexigrid.compose.renderers.GridCellRenderers
 import com.flexigrid.compose.state.rememberGridState
-import com.bitfield.flexigrid.ui.theme.FlexiGridTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -279,9 +280,7 @@ fun GridDemoScreen(
                 columns = columns,
                 items = employees,
                 config = GridConfig(
-                    stickyHeader = true,
-                    stickyColumnId = stickyId,
-                    alternateRowShading = true,
+                    sticky = StickyConfig(stickyHeader = true, stickyColumnId = stickyId),
                     enableSortAnimation = true
                 ),
                 state = gridState,

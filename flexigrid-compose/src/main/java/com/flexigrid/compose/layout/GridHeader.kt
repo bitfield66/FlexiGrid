@@ -13,12 +13,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.painterResource
-import com.flexigrid.compose.R
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -28,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.flexigrid.compose.R
 import com.flexigrid.compose.config.GridConfig
 import com.flexigrid.compose.model.GridColumn
 import com.flexigrid.compose.model.SortDirection
@@ -52,10 +52,15 @@ internal fun <T> GridHeader(
     onSortClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var headerModifier = Modifier
+        .height(config.sizing.headerHeight)
+
+    if(config.headerStyle.backgroundColor != null){
+        headerModifier = headerModifier.background(config.headerStyle.backgroundColor)
+    }
+
     Row(
-        modifier = modifier
-            .height(config.headerHeight)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+        modifier = headerModifier
     ) {
         columns.forEach { column ->
             val width = columnWidths[column.id] ?: 100.dp
@@ -73,7 +78,7 @@ internal fun <T> GridHeader(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(config.dividers.thickness)
-                        .background(MaterialTheme.colorScheme.outlineVariant)
+                        .background(config.dividerStyle.verticalDividerColor)
                 )
             }
         }

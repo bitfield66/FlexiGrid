@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
@@ -24,7 +23,6 @@ import com.flexigrid.compose.model.GridColumn
  * @param columns List of column definitions
  * @param columnWidths Map of column IDs to calculated widths
  * @param config Grid configuration
- * @param isAlternate Whether this is an alternate row (for striping)
  * @param modifier Modifier for the row
  */
 @Composable
@@ -34,19 +32,11 @@ internal fun <T> GridRow(
     columns: List<GridColumn<T>>,
     columnWidths: Map<String, Dp>,
     config: GridConfig,
-    isAlternate: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val rowBackground = if (config.alternateRowShading && isAlternate) {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
-    
     Row(
         modifier = modifier
-            .height(config.rowHeight)
-            .background(rowBackground)
+            .height(config.sizing.rowHeight)
     ) {
         columns.forEach { column ->
             val width = columnWidths[column.id] ?: 100.dp
@@ -67,7 +57,7 @@ internal fun <T> GridRow(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(config.dividers.thickness)
-                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        .background(config.dividerStyle.verticalDividerColor)
                 )
             }
         }
@@ -79,7 +69,7 @@ internal fun <T> GridRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(config.dividers.thickness)
-                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                .background(config.dividerStyle.horizontalDividerColor)
         )
     }
 }

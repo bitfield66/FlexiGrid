@@ -3,6 +3,7 @@ package com.flexigrid.compose.layout
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,9 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.Constraints
@@ -34,6 +35,7 @@ import androidx.compose.ui.zIndex
 import com.flexigrid.compose.config.GridConfig
 import com.flexigrid.compose.model.ColumnWidth
 import com.flexigrid.compose.model.GridColumn
+import com.flexigrid.compose.model.RowStyle
 import com.flexigrid.compose.model.SortDirection
 import com.flexigrid.compose.model.SortState
 import com.flexigrid.compose.state.GridState
@@ -68,7 +70,8 @@ fun <T> FlexiGrid(
     config: GridConfig = GridConfig.Default,
     state: GridState = rememberGridState(),
     key: ((T) -> Any)? = null,
-    onSortChanged: ((SortState) -> Unit)? = null
+    onSortChanged: ((SortState) -> Unit)? = null,
+    rowStyle: ((T, Int) -> RowStyle)? = null
 ) {
 
     // Sort items based on current sort state
@@ -104,7 +107,7 @@ fun <T> FlexiGrid(
     
     // Determine sticky column ID
     val stickyColumnId = remember(config, columns) {
-        config.stickyColumnId ?: if (config.stickyFirstColumn && columns.isNotEmpty()) columns.first().id else null
+        config.sticky.stickyColumnId
     }
 
     val containerModifier = if (config.clipToBounds) {
@@ -120,8 +123,7 @@ fun <T> FlexiGrid(
         val sampleSize = 100
         
         columns.forEach { column ->
-            val strategy = column.width
-            val widthPx = when (strategy) {
+            val widthPx = when (val strategy = column.width) {
                 is ColumnWidth.Fixed -> strategy.width.roundToPx()
                 
                 is ColumnWidth.ContentBased -> {
@@ -206,13 +208,12 @@ fun <T> FlexiGrid(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 // Determine horizontal scroll state
                 val scrollState = state.horizontalScrollState
                 
                 // Header row
-                if (config.stickyHeader) {
+                if (config.sticky.stickyHeader) {
                     GridHeaderRow(
                         columns = columns,
                         columnWidths = measuredWidths,
@@ -231,7 +232,7 @@ fun <T> FlexiGrid(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(config.dividers.thickness)
-                                .background(MaterialTheme.colorScheme.outlineVariant)
+                                .background(config.dividerStyle.horizontalDividerColor)
                         )
                     }
                 }
@@ -239,23 +240,25 @@ fun <T> FlexiGrid(
                 // Data rows - Single LazyColumn
                 LazyColumn(
                     state = state.verticalLazyListState,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = if (config.sizing.rowSpacing > 0.dp) Arrangement.spacedBy(config.sizing.rowSpacing) else Arrangement.Top
                 ) {
                     itemsIndexed(
                         items = sortedItems
                     ) { index, item ->
+                        val itemRowStyle = rowStyle?.invoke(item, index)
                         UnifiedGridRow(
                             item = item,
                             rowIndex = index,
                             columns = columns,
                             columnWidths = measuredWidths,
                             config = config,
-                            isAlternate = index % 2 == 1,
                             scrollState = scrollState,
                             stickyColumnId = stickyColumnId,
                             stickyColX = stickyColX,
                             stickyColWidth = stickyColWidth,
-                            viewportWidth = viewportWidth
+                            viewportWidth = viewportWidth,
+                            rowStyle = itemRowStyle
                         )
                     }
                 }
@@ -284,9 +287,7 @@ private fun <T> GridHeaderRow(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(config.headerHeight)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            // Apply horizontal scroll to the whole row
+            .height(config.sizing.headerHeight)
             .horizontalScroll(scrollState)
     ) {
         Row {
@@ -314,16 +315,16 @@ private fun <T> GridHeaderRow(
                             } else Modifier
                         )
                 ) {
-                    if (isSticky) {
+                    if (isSticky && config.headerStyle.backgroundColor != null) {
                         // Background required for sticky header to cover scrolled content
                         // Ensure it's opaque
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .background(config.headerStyle.backgroundColor )
                         )
                     }
-                    
+
                     GridHeader(
                         columns = listOf(column),
                         columnWidths = columnWidths,
@@ -334,13 +335,13 @@ private fun <T> GridHeaderRow(
                     )
                     
                     // Add divider manually
-                    if (config.dividers.showVerticalDividers) {
+                    if (config.dividers.showHeaderVerticalDivider) {
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
                                 .fillMaxHeight()
                                 .width(config.dividers.thickness)
-                                .background(MaterialTheme.colorScheme.outlineVariant)
+                                .background(config.dividerStyle.verticalDividerColor)
                         )
                     }
                 }
@@ -356,26 +357,63 @@ private fun <T> UnifiedGridRow(
     columns: List<GridColumn<T>>,
     columnWidths: Map<String, Dp>,
     config: GridConfig,
-    isAlternate: Boolean,
     scrollState: ScrollState,
     stickyColumnId: String?,
     stickyColX: Float,
     stickyColWidth: Float,
-    viewportWidth: Float
+    viewportWidth: Float,
+    rowStyle: RowStyle? = null
 ) {
-    val rowBackground = if (config.alternateRowShading && isAlternate) {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-    } else {
-        MaterialTheme.colorScheme.surface
+    var rowModifier = Modifier
+        .fillMaxWidth()
+        .height(config.sizing.rowHeight)
+
+    // Apply row shape
+    val shape = rowStyle?.shape ?: config.rowStyle.rowShape
+    if (shape != androidx.compose.ui.graphics.RectangleShape) {
+        rowModifier = rowModifier.clip(shape)
+    }
+
+    // Apply row background
+    val background = rowStyle?.background ?: config.rowStyle.defaultRowBackground
+    if (background is com.flexigrid.compose.model.RowBackground.Color) {
+        rowModifier = rowModifier.background(background.color)
     }
     
+    rowModifier = rowModifier.horizontalScroll(scrollState)
+
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(config.rowHeight)
-            .background(rowBackground)
-            .horizontalScroll(scrollState)
+        modifier = rowModifier
     ) {
+        // Image/drawable backgrounds rendered as content layer
+        when (background) {
+            is com.flexigrid.compose.model.RowBackground.ImageUrl -> {
+                 coil.compose.AsyncImage(
+                    model = background.url,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                )
+            }
+            is com.flexigrid.compose.model.RowBackground.DrawableRes -> {
+                 coil.compose.AsyncImage(
+                    model = background.id,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                 )
+            }
+            is com.flexigrid.compose.model.RowBackground.Vector -> {
+                androidx.compose.material3.Icon(
+                    imageVector = background.imageVector,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    tint = androidx.compose.ui.graphics.Color.Unspecified
+                )
+            }
+            else -> {}
+        }
+
         Row {
             columns.forEach { column ->
                 val width = columnWidths[column.id] ?: 100.dp
@@ -401,16 +439,12 @@ private fun <T> UnifiedGridRow(
                     // Sticky background to cover content underneath
                      if (isSticky) {
                         // Calculate opaque background color for sticky cells to prevent bleed-through
-                        // If it's alternate row, we need the opaque version of 'surfaceVariant over surface'
-                        val stickyBackground = if (isAlternate && config.alternateRowShading) {
-                            MaterialTheme.colorScheme.surfaceVariant
-                                .copy(alpha = 0.3f)
-                                .compositeOver(MaterialTheme.colorScheme.surface)
-                        } else {
-                            MaterialTheme.colorScheme.surface
+                        val stickyBackground = when (background) {
+                             is com.flexigrid.compose.model.RowBackground.Color -> background.color
+                             else -> MaterialTheme.colorScheme.surface // Fallback for image rows...
                         }
-                        
-                        Box(
+
+                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .background(stickyBackground)
@@ -428,7 +462,6 @@ private fun <T> UnifiedGridRow(
                                 showHorizontalDividers = false // Handled by container
                             )
                         ),
-                        isAlternate = isAlternate,
                         modifier = Modifier.width(width)
                     )
                     
@@ -438,7 +471,7 @@ private fun <T> UnifiedGridRow(
                                 .align(Alignment.CenterEnd)
                                 .fillMaxHeight()
                                 .width(config.dividers.thickness)
-                                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                                .background(config.dividerStyle.verticalDividerColor)
                         )
                     }
                 }
@@ -452,7 +485,7 @@ private fun <T> UnifiedGridRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(config.dividers.thickness)
-                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                .background(config.dividerStyle.horizontalDividerColor)
         )
     }
 }
